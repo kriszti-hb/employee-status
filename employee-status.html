@@ -1,1 +1,504 @@
-<h1>Test page</h1>
+<!DOCTYPE html>
+<html>
+  <head>
+    <base target="_top">
+    <meta charset="utf-8">
+    <meta http-equiv="refresh" content="60">
+    <style>
+      body {
+        font-family: Arial, sans-serif;
+        margin: 24px;
+        line-height: 1.5;
+        color: #222;
+      }
+
+      h1, h2, h3 {
+        margin-bottom: 10px;
+      }
+
+      .meta {
+        color: #666;
+        margin-bottom: 20px;
+      }
+
+      .intro {
+        background: #f7f7f7;
+        border: 1px solid #ddd;
+        border-radius: 10px;
+        padding: 14px;
+        margin-bottom: 24px;
+      }
+
+      .warning {
+        background: #fff4e5;
+        border: 1px solid #f0c36d;
+        border-radius: 10px;
+        padding: 14px;
+        margin-bottom: 24px;
+      }
+
+      .search-box {
+        position: sticky;
+        top: 0;
+        z-index: 10;
+        background: #fff;
+        padding: 12px 0 16px 0;
+        margin-bottom: 12px;
+      }
+
+      .search-row {
+        display: flex;
+        gap: 10px;
+        flex-wrap: wrap;
+        align-items: center;
+      }
+
+      .search-mode {
+        padding: 12px 14px;
+        border: 1px solid #ccc;
+        border-radius: 10px;
+        font-size: 15px;
+        background: #fff;
+      }
+
+      .search-input {
+        flex: 1 1 340px;
+        min-width: 280px;
+        padding: 12px 14px;
+        border: 1px solid #ccc;
+        border-radius: 10px;
+        font-size: 16px;
+      }
+
+      .btn {
+        padding: 12px 14px;
+        border: 1px solid #ccc;
+        background: #f7f7f7;
+        border-radius: 10px;
+        cursor: pointer;
+        font-size: 14px;
+      }
+
+      .search-help {
+        color: #666;
+        font-size: 13px;
+        margin-top: 8px;
+      }
+
+      .results-bar {
+        color: #444;
+        font-size: 14px;
+        margin: 10px 0 18px 0;
+      }
+
+      .card {
+        border: 1px solid #ddd;
+        border-radius: 10px;
+        padding: 14px;
+        margin-bottom: 16px;
+      }
+
+      .name {
+        font-size: 18px;
+        font-weight: bold;
+        margin-bottom: 6px;
+      }
+
+      .aliases {
+        color: #555;
+        font-size: 13px;
+        margin-bottom: 8px;
+      }
+
+      ul {
+        margin: 8px 0 0 20px;
+      }
+
+      li {
+        margin-bottom: 4px;
+      }
+
+      .searchable {
+        margin-top: 10px;
+        font-size: 12px;
+        color: #666;
+        background: #fafafa;
+        border-radius: 8px;
+        padding: 8px;
+        word-break: break-word;
+      }
+
+      table {
+        border-collapse: collapse;
+        width: 100%;
+        margin-top: 24px;
+      }
+
+      th, td {
+        border: 1px solid #ddd;
+        padding: 8px;
+        text-align: left;
+        vertical-align: top;
+      }
+
+      th {
+        background: #f3f3f3;
+      }
+
+      .section-spacer {
+        margin-top: 32px;
+      }
+
+      .small-note {
+        color: #666;
+        font-size: 13px;
+      }
+
+      .hidden {
+        display: none !important;
+      }
+
+      .muted-empty {
+        color: #777;
+        font-style: italic;
+        margin: 10px 0 20px 0;
+      }
+
+      .section-label {
+        display: inline-block;
+        font-size: 12px;
+        color: #666;
+        background: #f2f2f2;
+        padding: 4px 8px;
+        border-radius: 999px;
+        margin-bottom: 8px;
+      }
+
+      .results-panel {
+        background: #fcfcfc;
+        border: 1px solid #ddd;
+        border-radius: 12px;
+        padding: 16px;
+        margin-bottom: 24px;
+      }
+
+      .subsection-title {
+        margin-top: 18px;
+        margin-bottom: 10px;
+        font-size: 18px;
+      }
+    </style>
+  </head>
+  <body>
+    <h1>Employee Status by Branch</h1>
+
+    <div class="meta">
+      Generated at: <?= data.generatedAtReadable ?>
+    </div>
+
+    <? if (!data.ok) { ?>
+      <div class="warning">
+        <strong>Error:</strong> <?= data.error ?>
+      </div>
+    <? } ?>
+
+    <div class="intro">
+      <p>
+        This page shows employee branch eligibility and status based on the source Google Sheet.
+      </p>
+      <p>
+        Statuses may include: EFO, Contract, Qdiák, MultiJob.
+      </p>
+      <p>
+        If a branch is not listed under an employee, that employee is not eligible there.
+      </p>
+      <p>
+        Search is accent-insensitive.
+      </p>
+      <p class="small-note">
+        This page auto-refreshes every 60 seconds.
+      </p>
+    </div>
+
+    <div class="search-box">
+      <div class="search-row">
+        <select id="searchMode" class="search-mode">
+          <option value="employee">Search by employee</option>
+          <option value="branch">Search by branch</option>
+        </select>
+
+        <input
+          id="liveSearch"
+          class="search-input"
+          type="text"
+          placeholder="Type employee or branch name..."
+          autocomplete="off"
+        />
+
+        <button id="clearSearch" class="btn" type="button">Clear</button>
+      </div>
+
+      <div id="searchHelp" class="search-help">
+        Employee mode matches employee names only. Branch mode matches branch names only.
+      </div>
+
+      <div id="resultsBar" class="results-bar"></div>
+    </div>
+
+    <div id="searchResultsPanel" class="results-panel hidden">
+      <h2>Search Results</h2>
+
+      <div id="searchNoResults" class="muted-empty hidden">
+        No matches found.
+      </div>
+
+      <div id="searchEmployeeBlock" class="hidden">
+        <div class="subsection-title">Matching Employees</div>
+        <div id="searchEmployeeResults"></div>
+      </div>
+
+      <div id="searchBranchBlock" class="hidden">
+        <div class="subsection-title">Matching Branches</div>
+        <div id="searchBranchResults"></div>
+      </div>
+    </div>
+
+    <div id="defaultContent">
+      <h2>Employee View</h2>
+      <div id="employeeSection">
+        <? for (let i = 0; i < data.people.length; i++) { ?>
+          <div
+            class="card searchable-card employee-card"
+            data-type="employee"
+            data-title="<?= data.people[i].name ?>"
+            data-search="<?= data.people[i].searchableText ?>"
+          >
+            <div class="section-label">Employee</div>
+            <div class="name"><?= data.people[i].name ?></div>
+
+            <div class="aliases">
+              Search names: <?= data.people[i].aliases.join(' | ') ?>
+            </div>
+
+            <? if (data.people[i].statuses.length > 0) { ?>
+              <ul>
+                <? for (let j = 0; j < data.people[i].statuses.length; j++) { ?>
+                  <li>
+                    <?= data.people[i].statuses[j].branch ?>: <?= data.people[i].statuses[j].status ?>
+                  </li>
+                <? } ?>
+              </ul>
+            <? } else { ?>
+              <p>No eligible branches listed.</p>
+            <? } ?>
+
+            <div class="searchable">
+              <?= data.people[i].searchableText ?>
+            </div>
+          </div>
+        <? } ?>
+      </div>
+
+      <div class="section-spacer"></div>
+
+      <h2>Branch Summary</h2>
+      <div id="branchSection">
+        <? for (let i = 0; i < data.branchSummary.length; i++) { ?>
+          <div
+            class="card searchable-card branch-card"
+            data-type="branch"
+            data-title="<?= data.branchSummary[i].branch ?>"
+            data-search="<?= data.branchSummary[i].searchableText ?>"
+          >
+            <div class="section-label">Branch</div>
+            <div class="name"><?= data.branchSummary[i].branch ?></div>
+
+            <? if (data.branchSummary[i].employees.length > 0) { ?>
+              <ul>
+                <? for (let j = 0; j < data.branchSummary[i].employees.length; j++) { ?>
+                  <li>
+                    <?= data.branchSummary[i].employees[j].name ?>: <?= data.branchSummary[i].employees[j].status ?>
+                  </li>
+                <? } ?>
+              </ul>
+            <? } else { ?>
+              <p>No eligible employees listed.</p>
+            <? } ?>
+
+            <div class="searchable">
+              <?= data.branchSummary[i].searchableText ?>
+            </div>
+          </div>
+        <? } ?>
+      </div>
+
+      <div class="section-spacer"></div>
+
+      <h2>Raw Table</h2>
+      <table id="rawTable">
+        <thead>
+          <tr>
+            <? for (let i = 0; i < data.headers.length; i++) { ?>
+              <th><?= data.headers[i] ?></th>
+            <? } ?>
+          </tr>
+        </thead>
+        <tbody>
+          <? for (let i = 0; i < data.rows.length; i++) { ?>
+            <tr>
+              <? for (let j = 0; j < data.rows[i].length; j++) { ?>
+                <td><?= data.rows[i][j] ?></td>
+              <? } ?>
+            </tr>
+          <? } ?>
+        </tbody>
+      </table>
+    </div>
+
+    <script>
+      (function () {
+        const input = document.getElementById('liveSearch');
+        const clearBtn = document.getElementById('clearSearch');
+        const searchMode = document.getElementById('searchMode');
+        const resultsBar = document.getElementById('resultsBar');
+        const searchHelp = document.getElementById('searchHelp');
+
+        const allEmployeeCards = Array.from(document.querySelectorAll('.employee-card'));
+        const allBranchCards = Array.from(document.querySelectorAll('.branch-card'));
+
+        const defaultContent = document.getElementById('defaultContent');
+        const searchResultsPanel = document.getElementById('searchResultsPanel');
+        const searchNoResults = document.getElementById('searchNoResults');
+        const searchEmployeeBlock = document.getElementById('searchEmployeeBlock');
+        const searchBranchBlock = document.getElementById('searchBranchBlock');
+        const searchEmployeeResults = document.getElementById('searchEmployeeResults');
+        const searchBranchResults = document.getElementById('searchBranchResults');
+
+        function normalize(text) {
+          return String(text || '')
+            .toLowerCase()
+            .normalize('NFD')
+            .replace(/[\u0300-\u036f]/g, '')
+            .trim()
+            .replace(/\s+/g, ' ');
+        }
+
+        function tokenize(query) {
+          return normalize(query).split(' ').filter(Boolean);
+        }
+
+        function matchesHeader(title, terms) {
+          const normalizedTitle = normalize(title);
+          if (!terms.length) return true;
+          return terms.every(term => normalizedTitle.includes(term));
+        }
+
+        function scoreByTitle(card, terms) {
+          const title = normalize(card.getAttribute('data-title') || '');
+          let score = 0;
+
+          if (terms.length === 1) {
+            if (title === terms[0]) score += 100;
+            if (title.startsWith(terms[0])) score += 60;
+          }
+
+          terms.forEach(term => {
+            if (title.includes(term)) score += 20;
+          });
+
+          return score;
+        }
+
+        function clearResults() {
+          searchEmployeeResults.innerHTML = '';
+          searchBranchResults.innerHTML = '';
+        }
+
+        function cloneCard(card) {
+          return card.cloneNode(true);
+        }
+
+        function updateHelpText() {
+          if (searchMode.value === 'employee') {
+            input.placeholder = 'Type employee name...';
+            searchHelp.textContent = 'Employee mode matches employee names only.';
+          } else {
+            input.placeholder = 'Type branch name...';
+            searchHelp.textContent = 'Branch mode matches branch names only.';
+          }
+        }
+
+        function renderSearchResults() {
+          const query = input.value;
+          const terms = tokenize(query);
+          const mode = searchMode.value;
+
+          if (!terms.length) {
+            clearResults();
+            searchResultsPanel.classList.add('hidden');
+            defaultContent.classList.remove('hidden');
+            resultsBar.textContent =
+              `Showing all results: ${allEmployeeCards.length} employee cards, ${allBranchCards.length} branch cards.`;
+            return;
+          }
+
+          clearResults();
+          defaultContent.classList.add('hidden');
+          searchResultsPanel.classList.remove('hidden');
+
+          if (mode === 'employee') {
+            const matchedEmployees = allEmployeeCards
+              .filter(card => matchesHeader(card.getAttribute('data-title') || '', terms))
+              .sort((a, b) => scoreByTitle(b, terms) - scoreByTitle(a, terms));
+
+            matchedEmployees.forEach(card => {
+              searchEmployeeResults.appendChild(cloneCard(card));
+            });
+
+            searchEmployeeBlock.classList.toggle('hidden', matchedEmployees.length === 0);
+            searchBranchBlock.classList.add('hidden');
+            searchNoResults.classList.toggle('hidden', matchedEmployees.length !== 0);
+
+            resultsBar.textContent =
+              `Employee search: "${query}" — ${matchedEmployees.length} match(es).`;
+          } else {
+            const matchedBranches = allBranchCards
+              .filter(card => matchesHeader(card.getAttribute('data-title') || '', terms))
+              .sort((a, b) => scoreByTitle(b, terms) - scoreByTitle(a, terms));
+
+            matchedBranches.forEach(card => {
+              searchBranchResults.appendChild(cloneCard(card));
+            });
+
+            searchBranchBlock.classList.toggle('hidden', matchedBranches.length === 0);
+            searchEmployeeBlock.classList.add('hidden');
+            searchNoResults.classList.toggle('hidden', matchedBranches.length !== 0);
+
+            resultsBar.textContent =
+              `Branch search: "${query}" — ${matchedBranches.length} match(es).`;
+          }
+        }
+
+        input.addEventListener('input', renderSearchResults);
+
+        searchMode.addEventListener('change', function () {
+          input.value = '';
+          clearResults();
+          updateHelpText();
+          renderSearchResults();
+          input.focus();
+        });
+
+        clearBtn.addEventListener('click', function () {
+          input.value = '';
+          clearResults();
+          renderSearchResults();
+          input.focus();
+        });
+
+        updateHelpText();
+        renderSearchResults();
+      })();
+    </script>
+  </body>
+</html>
